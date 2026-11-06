@@ -1,0 +1,2 @@
+# Compatibility entrypoint; see README for hash-locked Linux release installs.
+-r requirements-runtime.txt

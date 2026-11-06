@@ -1,0 +1,21 @@
+FROM python:3.14.10-alpine@sha256:a18b20ad69e74df6cf6d2e1b1a260d7a1ecf5380fd83b310f83ba88c461cf894
+LABEL org.opencontainers.image.title="RefundShield synthetic API" \
+      org.opencontainers.image.authors="The Anomaly Syndicate"
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
+    OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+WORKDIR /app
+COPY backend/requirements-runtime-linux.lock /tmp/runtime.lock
+RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/runtime.lock \
+    && python -m pip check \
+    && python -m pip uninstall --yes pip \
+    && rm -rf /usr/local/lib/python3.14/ensurepip \
+    && rm /tmp/runtime.lock
+COPY backend/app ./app
+COPY NOTICE.md /licenses/NOTICE.md
+COPY LICENSE /licenses/LICENSE
+COPY docs/licenses/runtime /licenses/python-runtime
+USER 10001:10001
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2).read()"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--loop", "asyncio", "--http", "h11", "--no-access-log", "--no-server-header", "--no-proxy-headers", "--limit-concurrency", "16", "--timeout-keep-alive", "5", "--timeout-graceful-shutdown", "10"]

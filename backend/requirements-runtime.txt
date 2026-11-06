@@ -1,0 +1,8 @@
+# Minimal HTTP runtime roots. No reload, WebSocket, test or scanner extras.
+# Linux release builds use requirements-runtime-linux.lock with wheel hashes.
+-c requirements-tested.txt
+fastapi==0.162.0
+uvicorn==0.54.0
+numpy==2.5.4
+pandas==3.1.1
+networkx==3.7

@@ -1,0 +1,76 @@
+name: Verify RefundShield
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, immutable revision
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan source and history without exposing findings
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o "$RUNNER_TEMP/gitleaks.tgz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tgz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact=100 --ignore-gitleaks-allow --no-banner .
+      - name: Frozen frontend tests, types, build and advisory checks
+        shell: bash
+        run: |
+          docker run --rm --cpus 2 --memory 1g --pids-limit 256 --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs /work:rw,exec,nosuid,size=1g --mount type=bind,src="$PWD/frontend",dst=/input,readonly -w /work \
+            node:22.23.4-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 \
+            sh -ec 'cp -R /input/. /work/; npm ci --ignore-scripts --no-audit --no-fund; npm test -- --maxWorkers=2; npm run typecheck; npm run build; npm audit --audit-level=low; npm audit --omit=dev --audit-level=low'
+      - name: Hash-locked Linux backend and API security tests
+        shell: bash
+        run: |
+          docker build -f deploy/Dockerfile.test -t refundshield-test:ci .
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cpus 1 --memory 1g --pids-limit 64 --cap-drop ALL --security-opt no-new-privileges refundshield-test:ci
+      - name: Build production images with notices
+        run: |
+          docker build -f deploy/Dockerfile.api -t refundshield-api:phase3-private .
+          docker build -f deploy/Dockerfile.web -t refundshield-web:phase3-private .
+      - name: Scan final production images
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/aquasecurity/trivy/releases/download/v0.76.2/trivy_0.76.2_Linux-64bit.tar.gz -o "$RUNNER_TEMP/trivy.tgz"
+          echo "bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf  $RUNNER_TEMP/trivy.tgz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/trivy.tgz" -C "$RUNNER_TEMP" trivy
+          "$RUNNER_TEMP/trivy" image --image-src docker --scanners vuln --exit-code 1 refundshield-api:phase3-private
+          "$RUNNER_TEMP/trivy" image --image-src docker --scanners vuln --exit-code 1 refundshield-web:phase3-private
+      - name: Private loopback HTTPS and browser regression
+        shell: bash
+        env:
+          REFUNDSHIELD_ORIGINS: https://127.0.0.1:8443
+          BASE_URL: https://127.0.0.1:8443
+          BROWSER: chromium
+          BROWSER_CHANNEL: chrome
+        run: |
+          set -euo pipefail
+          export REFUNDSHIELD_TLS_DIR="$RUNNER_TEMP/refundshield-certs"
+          mkdir -p "$REFUNDSHIELD_TLS_DIR"
+          openssl req -x509 -newkey rsa:2048 -sha256 -days 1 -nodes -keyout "$REFUNDSHIELD_TLS_DIR/tls.key" -out "$REFUNDSHIELD_TLS_DIR/tls.crt" -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' 2>/dev/null
+          chmod 644 "$REFUNDSHIELD_TLS_DIR/tls.key"
+          trap 'docker compose -f deploy/compose.yaml down --timeout 15' EXIT
+          docker compose -f deploy/compose.yaml up -d --no-build --wait --wait-timeout 60
+          cd qa
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm audit --audit-level=low
+          export RESULTS_DIR="file://$RUNNER_TEMP/refundshield-browser/"
+          node browser-check.mjs
+          export RESULTS_DIR="file://$RUNNER_TEMP/refundshield-fonts/"
+          node security-browser.mjs
+          python3 release-check.py --local-self-signed --load --output "$RUNNER_TEMP/refundshield-api-results.json"

@@ -1,0 +1,9 @@
+{
+  "name": "refundshield-private-qa",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.65.0",
+    "@axe-core/playwright": "4.14.0"
+  }
+}
