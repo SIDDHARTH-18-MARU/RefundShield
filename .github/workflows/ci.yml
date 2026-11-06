@@ -64,7 +64,7 @@ jobs:
           mkdir -p "$REFUNDSHIELD_TLS_DIR"
           openssl req -x509 -newkey rsa:2048 -sha256 -days 1 -nodes -keyout "$REFUNDSHIELD_TLS_DIR/tls.key" -out "$REFUNDSHIELD_TLS_DIR/tls.crt" -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' 2>/dev/null
           chmod 644 "$REFUNDSHIELD_TLS_DIR/tls.key"
-          trap 'docker compose -f deploy/compose.yaml down --timeout 15' EXIT
+          trap 'docker compose -f "$GITHUB_WORKSPACE/deploy/compose.yaml" down --timeout 15' EXIT
           docker compose -f deploy/compose.yaml up -d --no-build --wait --wait-timeout 60
           cd qa
           npm ci --ignore-scripts --no-audit --no-fund
