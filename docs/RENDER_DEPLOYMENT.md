@@ -18,6 +18,7 @@ The supervisor refuses root, applies Linux no-new-privileges itself, disables co
 
 - Existing digest-pinned Node22.23.4 and Python3.14.10 Alpine bases; existing19-package CPython3.14/musllinux-amd64 binary-wheel hash lock and build-time pip check. No pip/compiler/test dependencies remain in production.
 - Nginx1.30.6-r0 and PCRE2 10.49-r0 are the only added OS packages. `deploy/render-apk.sha256` fixes their exact official Alpine artifact hashes; installation verifies these hashes and distribution signatures. An unavailable/mismatching artifact fails the build instead of silently upgrading.
+- `deploy/patch-runtime-zlib.sh` replaces the pinned base's zlib with Alpine's signed, SHA-256-pinned `1.4-r0` package across all three production images. This addresses CVE-2026-4738. The zlib 1.4 notice is bundled at `/licenses/alpine/zlib-LICENSE`.
 - MIT/team attribution and existing Python/frontend/font notices remain. Additional unmodified Nginx, PCRE2 and its pinned SLJIT subcomponent notices live under `docs/licenses/render` and are copied to `/licenses/render`. PCRE2 includes BSD-3-Clause WITH PCRE2-exception and separate JIT terms; do not call all third-party runtime code MIT-only. Base-image GPL/LGPL/source-availability obligations remain applicable if binaries/images are distributed. No image has been pushed.
 - The Docker context uses a positive allowlist; only built frontend assets are served. Certificates, credentials, private evidence, original archives, installed QA packages and source maps are excluded.
 

@@ -11,6 +11,8 @@ LABEL org.opencontainers.image.title="RefundShield synthetic API" \
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 WORKDIR /app
+COPY deploy/patch-runtime-zlib.sh /tmp/patch-runtime-zlib.sh
+RUN /bin/sh /tmp/patch-runtime-zlib.sh && rm /tmp/patch-runtime-zlib.sh
 COPY deploy/render-apk.sha256 /tmp/render-apk.sha256
 RUN mkdir /tmp/render-apks \
     && cd /tmp/render-apks \
@@ -33,6 +35,7 @@ COPY --from=builder /build/dist /usr/share/nginx/html
 COPY docs/licenses/frontend /licenses/frontend
 COPY docs/licenses/fonts /licenses/fonts
 COPY docs/licenses/render /licenses/render
+COPY docs/licenses/alpine/zlib-LICENSE /licenses/alpine/zlib-LICENSE
 COPY deploy/run-render.py deploy/render_app.py deploy/nginx.render.conf.template ./deployment/
 USER 10001:10001
 EXPOSE 10000
