@@ -8,12 +8,15 @@ RUN npm run build
 FROM nginx:stable-alpine@sha256:e9b2d7624fd7957f4ed44ae0a272d93fb73aeb8512ba8916f8118ae6143fd115
 LABEL org.opencontainers.image.title="RefundShield static web" \
       org.opencontainers.image.authors="The Anomaly Syndicate"
+COPY deploy/patch-runtime-zlib.sh /tmp/patch-runtime-zlib.sh
+RUN /bin/sh /tmp/patch-runtime-zlib.sh && rm /tmp/patch-runtime-zlib.sh
 COPY --from=builder /build/dist /usr/share/nginx/html
 COPY deploy/nginx.conf /etc/nginx/nginx.conf
 COPY NOTICE.md /licenses/NOTICE.md
 COPY LICENSE /licenses/LICENSE
 COPY docs/licenses/frontend /licenses/frontend
 COPY docs/licenses/fonts /licenses/fonts
+COPY docs/licenses/alpine/zlib-LICENSE /licenses/alpine/zlib-LICENSE
 USER 101:101
 EXPOSE 8443
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

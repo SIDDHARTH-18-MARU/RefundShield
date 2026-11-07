@@ -88,6 +88,10 @@ The frontend inventory conservatively covers the production npm dependency closu
 
 ## Open distribution decisions
 
+The optional Render image adds Nginx1.30.6-r0 (BSD-2-Clause) and PCRE2 10.49-r0 (BSD-3-Clause WITH PCRE2-exception, with separate JIT terms) from hash-verified Alpine APKs. Full additional upstream texts are under `licenses/render`: Nginx LICENSE, PCRE2 LICENCE.md/COPYING and SLJIT LICENSE at the exact PCRE2 submodule commit. These are copied into `/licenses/render` in that image. The existing Python, frontend, font and base-image obligations remain; no installed dependency is relicensed by the project's MIT grant. Artifact/version/hash provenance and scanner evidence stay private.
+
+The three production images install Alpine zlib 1.4-r0 (Zlib) from the signed APK pinned by SHA-256 in `deploy/patch-runtime-zlib.sh`. The [upstream zlib 1.4 notice](licenses/alpine/zlib-LICENSE) is retained at `/licenses/alpine/zlib-LICENSE` in each image.
+
 - The team leader confirmed collaborator/challenge/asset publication rights and approved MIT for original code with team-only credit. All dependency/font copyright and license notices remain unchanged; MIT does not relicense third-party material.
 - NumPy wheel notices include OpenBLAS/LAPACK and GCC runtime terms/exception beyond its top-level metadata. Retain full notices and review exact binary redistribution conditions; do not label the wheel BSD-only.
 - Retain pandas bundled notices, typing_extensions PSF terms, tzdata/data notices and all applicable MIT/ISC/BSD/Apache copyright/NOTICE material.

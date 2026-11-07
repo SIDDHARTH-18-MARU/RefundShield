@@ -7,6 +7,10 @@ import { fileURLToPath } from 'node:url';
 // Keep release regression artifacts separate from the Phase 1 evidence.
 const out = new URL(process.env.RESULTS_DIR || './results/', import.meta.url);
 const base = process.env.BASE_URL || 'http://127.0.0.1:5173';
+// A multi-request sweep has a separate bounded budget on 0.1-CPU targets.
+// Individual application HTTP requests retain their existing 20-second deadline.
+const analysisWait = Number(process.env.ANALYSIS_WAIT_MS || 20000);
+if (!Number.isInteger(analysisWait) || analysisWait < 20000 || analysisWait > 90000) throw new Error('Invalid aggregate analysis wait budget');
 if (!/^(http:\/\/127\.0\.0\.1:(5173|4173)|https:\/\/127\.0\.0\.1:8443)$/.test(base)) throw new Error('QA is restricted to approved loopback test ports');
 const browserName = process.env.BROWSER || 'chromium';
 const engine = { chromium, firefox, webkit }[browserName];
@@ -163,12 +167,12 @@ try {
     await page.getByLabel('Inspect return-rate bin').selectOption({ index: 1 }); await ready();
     await page.getByRole('button', { name: 'Close bin detail', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Run sweep', exact: true }).click();
-    await page.getByRole('button', { name: 'Re-run', exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole('button', { name: 'Re-run', exact: true }).waitFor({ timeout: analysisWait });
   });
   await check('Scenario comparison and existing CSV export', async () => {
     await page.goto(`${base}/scenarios`); await ready();
     await page.getByRole('button', { name: 'Compare scenarios', exact: true }).click();
-    await page.getByRole('button', { name: 'CSV', exact: true }).waitFor({ timeout: 20000 });
+    await page.getByRole('button', { name: 'CSV', exact: true }).waitFor({ timeout: analysisWait });
     const [file] = await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('button', { name: 'CSV', exact: true }).click(),
