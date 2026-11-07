@@ -100,6 +100,8 @@ Linux backend/security tests can run in the separate `deploy/Dockerfile.test` im
 
 ## Limits and release status
 
+A separate [Render Free adapter](docs/RENDER_DEPLOYMENT.md) prepares one non-root Docker web service with static assets, same-origin `/api` and a private Unix-socket backend. It preserves the original deployment and analytics. The adapter requires its own release review and separately authorized hosting; this repository does not establish a live website. Local target setup, test commands and Free-tier limitations are documented there.
+
 - Synthetic rules demonstrate a mechanism; no real-world accuracy, precision, recall or fraud-probability claims are made. Shared infrastructure can be legitimate.
 - Local notes are limited to 2,000 characters, 100 retained cases and 60 actions per case. Corrupt/unavailable storage recovers with a notice. Tab duplication/session restoration may preserve an initial snapshot; this is not secure deletion or a guaranteed retention deadline.
 - The API is read-only and bounded, with a finite analysis cache and process-wide capacity controls. Public hosting also needs reviewed edge budgets, monitoring and operational ownership.

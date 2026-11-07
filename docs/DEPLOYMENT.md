@@ -1,5 +1,7 @@
 # Production candidate and local validation
 
+For the additive single-service Render Free target, see [Render deployment](RENDER_DEPLOYMENT.md). The two-container configuration below remains supported and unchanged; it is not uploaded as a Compose service to Render.
+
 Team: **The Anomaly Syndicate**. The team leader authorized public hosting subject to technical and account/cost gates. This two-container configuration was tested locally; no public endpoint or live URL has been provisioned. Provider-specific adaptation requires separate validation.
 
 ## Topology and reproducibility

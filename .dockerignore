@@ -21,6 +21,11 @@
 !deploy/Dockerfile.web
 !deploy/Dockerfile.test
 !deploy/nginx.conf
+!deploy/Dockerfile.render
+!deploy/render-apk.sha256
+!deploy/run-render.py
+!deploy/render_app.py
+!deploy/nginx.render.conf.template
 !NOTICE.md
 !LICENSE
 !docs/

@@ -1,0 +1,21 @@
+# Apply only after local validation and separate deployment authorization.
+services:
+  - type: web
+    name: refundshield
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/SIDDHARTH-18-MARU/RefundShield
+    branch: main
+    dockerfilePath: ./deploy/Dockerfile.render
+    dockerContext: .
+    autoDeployTrigger: "off"
+    healthCheckPath: /healthz
+    maxShutdownDelaySeconds: 20
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: OMP_NUM_THREADS
+        value: "1"
